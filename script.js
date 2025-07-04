@@ -24,6 +24,7 @@ let analyser;
 let dataArray;
 let drawVisual;
 let finalTranscript = '';
+let originalStream; // 元のストリームを保持する変数
 let businessTerms = {
     "アジェンダ": "会議の議題や議事日程のこと。",
     "アサイン": "仕事や役職を割り当てること。",
@@ -804,6 +805,11 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
             if (mediaRecorder && mediaRecorder.state === 'recording') {
                 mediaRecorder.stop();
             }
+            // 停止時に元のストリームのトラックもすべて停止する
+            if (originalStream) {
+                originalStream.getTracks().forEach(track => track.stop());
+                originalStream = null;
+            }
             if (drawVisual) {
                 cancelAnimationFrame(drawVisual);
             }
@@ -846,24 +852,28 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
 
     startBtn.onclick = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // 取得した元のストリームを保持しておく
+            originalStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
             recognition.start();
 
-            mediaRecorder = new MediaRecorder(stream);
+            // ストリームを複製し、各機能が独立して使えるようにする
+            const recorderStream = originalStream.clone();
+            const visualizerStream = originalStream.clone();
+
+            mediaRecorder = new MediaRecorder(recorderStream);
             mediaRecorder.ondataavailable = event => {
                 audioChunks.push(event.data);
             };
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const audioUrl = URL.createObjectURL(audioBlob);
-                downloadAudioLink.href = audioUrl;
                 audioPlaybackContainer.classList.remove('hidden');
                 audioChunks = [];
             };
             mediaRecorder.start();
 
-            setupAudioVisualizer(stream);
+            setupAudioVisualizer(visualizerStream);
 
             audioPlaybackContainer.classList.add('hidden');
 
@@ -875,10 +885,8 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
 
     stopBtn.onclick = () => {
         isStopping = true; // ユーザーによる停止であることを示す
-        if (mediaRecorder && mediaRecorder.stream) {
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        }
-        recognition.stop(); // これにより onend イベントが発火し、後処理が行われる
+        // まず音声認識を停止させる。リソースの解放はonendイベントに任せる
+        recognition.stop();
     };
 
     copyBtn.onclick = () => {

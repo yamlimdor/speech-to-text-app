@@ -754,8 +754,8 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     recognition.lang = 'ja-JP';
     // モバイルでの安定性を優先し、continuousモードを無効化します。
     // 発話が一度終わるたびに結果が確定し、自動で次の認識が始まります。
-    recognition.interimResults = true; // 中間結果は表示し続けます
-    recognition.continuous = false;
+    recognition.interimResults = false; // 中間結果を無効にし、確定結果のみを取得することで安定性を向上
+    recognition.continuous = false; // 一文ごとに認識を確定させるモード
 
     resultText.value = finalTranscript; // Use resultText
     updateUIState();
@@ -822,29 +822,23 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     
     recognition.onresult = (event) => {
         console.log('onresult event fired:', event); // イベント自体をログに出力
-        let interimTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            // isFinalがtrueになったら、それは確定した結果
-            if (event.results[i].isFinal) {
-                const now = new Date();
-                const hours = String(now.getHours()).padStart(2, '0');
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                let timestamp = '';
-                // タイムスタンプは、前の発話から1分以上経過している場合のみ追加
-                if (minutes !== lastTimestampMinute) {
-                    timestamp = `[${hours}:${minutes}] `;
-                    lastTimestampMinute = minutes;
-                }
-                // 確定したテキストをfinalTranscriptに追加
-                finalTranscript += timestamp + transcript + '\n';
-            } else {
-                // isFinalがfalseの場合は中間結果
-                interimTranscript += transcript;
+        // interimResults: false のため、常に確定した結果のみが返ってくる
+        const transcript = event.results[event.results.length - 1][0].transcript;
+
+        if (transcript) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            let timestamp = '';
+            // タイムスタンプは、前の発話から1分以上経過している場合のみ追加
+            if (minutes !== lastTimestampMinute) {
+                timestamp = `[${hours}:${minutes}] `;
+                lastTimestampMinute = minutes;
             }
+            // 確定したテキストをfinalTranscriptに追加
+            finalTranscript += timestamp + transcript + '\n';
         }
-        // 確定したテキストと、現在の中間結果を合わせて表示
-        resultText.value = finalTranscript + interimTranscript;
+        resultText.value = finalTranscript;
         updateUIState();
         autoSaveChanges();
         resultText.scrollTop = resultText.scrollHeight; // Scroll the textarea

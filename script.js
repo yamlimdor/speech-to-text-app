@@ -758,7 +758,50 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     resultText.value = finalTranscript; // Use resultText
     updateUIState();
     let lastTimestampMinute = -1;
+    let isStopping = false; // 停止ボタンが押されたかを判定するフラグ
 
+    recognition.onstart = () => {
+        console.log('Speech recognition service has started');
+        isStopping = false;
+        recordingIndicator.classList.add('recording');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+    };
+
+    recognition.onend = () => {
+        console.log('Speech recognition service disconnected');
+        // ユーザーが停止ボタンを押したのではなく、無音などで自然に停止した場合
+        if (!isStopping) {
+            console.log('Restarting recognition...');
+            try {
+                // 自動的に再開
+                recognition.start();
+            } catch (e) {
+                console.error('Could not restart recognition:', e);
+                // 停止処理を強制実行
+                stopBtn.click();
+            }
+        } else {
+            // ユーザーが停止ボタンを押した場合のUI更新処理
+            recordingIndicator.classList.remove('recording');
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            if (drawVisual) {
+                cancelAnimationFrame(drawVisual);
+            }
+            clearWaveform();
+            autoSaveChanges();
+        }
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        alert(`音声認識でエラーが発生しました: ${event.error}`);
+    };
+    
     recognition.onresult = (event) => {
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -787,7 +830,6 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     startBtn.onclick = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
             recognition.start();
 
             mediaRecorder = new MediaRecorder(stream);
@@ -805,9 +847,6 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
 
             setupAudioVisualizer(stream);
 
-            recordingIndicator.classList.add('recording');
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
             audioPlaybackContainer.classList.add('hidden');
 
         } catch (error) {
@@ -817,21 +856,11 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     };
 
     stopBtn.onclick = () => {
+        isStopping = true; // ユーザーによる停止であることを示す
         if (mediaRecorder && mediaRecorder.stream) {
             mediaRecorder.stream.getTracks().forEach(track => track.stop());
         }
-        if (recognition) {
-            recognition.stop();
-        }
-        if (drawVisual) {
-            cancelAnimationFrame(drawVisual);
-        }
-        clearWaveform();
-        
-        recordingIndicator.classList.remove('recording');
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-        autoSaveChanges();
+        recognition.stop(); // これにより onend イベントが発火し、後処理が行われる
     };
 
     copyBtn.onclick = () => {

@@ -901,7 +901,7 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
 
         // UIを元に戻す
         explainBtn.disabled = false;
-        explainBtn.textContent = '用語を解説 (Gemini)';
+        explainBtn.textContent = '用語を解説';
     };
 
 } else {

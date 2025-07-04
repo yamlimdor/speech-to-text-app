@@ -760,6 +760,19 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     let lastTimestampMinute = -1;
     let isStopping = false; // 停止ボタンが押されたかを判定するフラグ
 
+    // --- デバッグ用イベントハンドラを追加 ---
+    recognition.onspeechstart = () => {
+        console.log('Speech has been detected.');
+    };
+
+    recognition.onspeechend = () => {
+        console.log('Speech has stopped being detected.');
+    };
+
+    recognition.onnomatch = (event) => {
+        console.log("Speech not recognized (onnomatch event).", event);
+    };
+
     recognition.onstart = () => {
         console.log('Speech recognition service has started');
         isStopping = false;
@@ -799,10 +812,14 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
 
     recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
-        alert(`音声認識でエラーが発生しました: ${event.error}`);
+        // 'no-speech' は無音状態が続くと頻発するため、アラートは表示しない
+        if (event.error !== 'no-speech' && event.error !== 'audio-capture') {
+            alert(`音声認識でエラーが発生しました: ${event.error}\nメッセージ: ${event.message || 'なし'}`);
+        }
     };
     
     recognition.onresult = (event) => {
+        console.log('onresult event fired:', event); // イベント自体をログに出力
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;

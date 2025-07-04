@@ -752,8 +752,10 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     const recognition = new SpeechRecognition();
 
     recognition.lang = 'ja-JP';
-    recognition.interimResults = true;
-    recognition.continuous = true;
+    // モバイルでの安定性を優先し、continuousモードを無効化します。
+    // 発話が一度終わるたびに結果が確定し、自動で次の認識が始まります。
+    recognition.interimResults = true; // 中間結果は表示し続けます
+    recognition.continuous = false;
 
     resultText.value = finalTranscript; // Use resultText
     updateUIState();
@@ -774,7 +776,7 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     };
 
     recognition.onstart = () => {
-        console.log('Speech recognition service has started');
+        console.log('Speech recognition service has started. Waiting for speech.');
         isStopping = false;
         recordingIndicator.classList.add('recording');
         startBtn.disabled = true;
@@ -783,10 +785,10 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
 
     recognition.onend = () => {
         console.log('Speech recognition service disconnected');
-        // ユーザーが停止ボタンを押したのではなく、無音などで自然に停止した場合
+        // ユーザーが停止ボタンを押したのではなく、発話が終了して自然に停止した場合
         if (!isStopping) {
-            console.log('Restarting recognition...');
             try {
+                console.log('Restarting recognition for next utterance...');
                 // 自動的に再開
                 recognition.start();
             } catch (e) {
@@ -811,7 +813,7 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     };
 
     recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
+        console.error('Speech recognition error:', event.error, event.message);
         // 'no-speech' は無音状態が続くと頻発するため、アラートは表示しない
         if (event.error !== 'no-speech' && event.error !== 'audio-capture') {
             alert(`音声認識でエラーが発生しました: ${event.error}\nメッセージ: ${event.message || 'なし'}`);
@@ -823,22 +825,26 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
+            // isFinalがtrueになったら、それは確定した結果
             if (event.results[i].isFinal) {
                 const now = new Date();
                 const hours = String(now.getHours()).padStart(2, '0');
                 const minutes = String(now.getMinutes()).padStart(2, '0');
                 let timestamp = '';
+                // タイムスタンプは、前の発話から1分以上経過している場合のみ追加
                 if (minutes !== lastTimestampMinute) {
                     timestamp = `[${hours}:${minutes}] `;
                     lastTimestampMinute = minutes;
                 }
-
+                // 確定したテキストをfinalTranscriptに追加
                 finalTranscript += timestamp + transcript + '\n';
             } else {
+                // isFinalがfalseの場合は中間結果
                 interimTranscript += transcript;
             }
         }
-        resultText.value = finalTranscript + interimTranscript; // Use resultText
+        // 確定したテキストと、現在の中間結果を合わせて表示
+        resultText.value = finalTranscript + interimTranscript;
         updateUIState();
         autoSaveChanges();
         resultText.scrollTop = resultText.scrollHeight; // Scroll the textarea

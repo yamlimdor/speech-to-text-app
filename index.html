@@ -3,17 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>音声文字起こし with Gemini解説</title>
+    <title>音声文字起こし</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        .header {
+            position: relative; /* ボタンを絶対配置するための基準 */
+            display: flex;
+            justify-content: center; /* タイトルを中央に配置 */
+            align-items: center;
+            padding: 1rem 0; /* 上下の余白 */
+        }
+        .header-title {
+            text-align: center;
+        }
+        .header-title h1, .header-title p {
+            margin: 0; /* h1, p のデフォルトマージンをリセット */
+        }
+        #theme-toggle-btn {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+        }
+
+        /* スマートフォン向けのスタイル */
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            #theme-toggle-btn {
+                position: static;
+                transform: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1><span id="recording-indicator"></span>音声文字起こし</h1>
-            <p>録音ボタンを押して、マイクに向かって話してください。</p>
+            <div class="header-title">
+                <h1><span id="recording-indicator"></span>音声文字起こし</h1>
+                <p>録音ボタンを押して、マイクに向かって話してください。</p>
+            </div>
             <button id="theme-toggle-btn">ダークモード切替</button>
         </div>
 

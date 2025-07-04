@@ -844,40 +844,25 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
         resultText.scrollTop = resultText.scrollHeight; // Scroll the textarea
     };
 
-    startBtn.onclick = async () => {
+    startBtn.onclick = () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // 【最終テスト】音声認識機能にマイクを専有させてみます。
+            // これで動作するか確認するため、一時的に録音ファイル作成と波形表示の機能を無効化します。
+            // recognition.start()が単独でマイクの許可を求めるようになります。
             recognition.start();
-
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                downloadAudioLink.href = audioUrl;
-                audioPlaybackContainer.classList.remove('hidden');
-                audioChunks = [];
-            };
-            mediaRecorder.start();
-
-            // setupAudioVisualizer(stream); // 仮説を検証するため、一時的に波形表示を無効化
 
             audioPlaybackContainer.classList.add('hidden');
 
         } catch (error) {
-            console.error('Error accessing microphone:', error);
-            alert('マイクへのアクセスが許可されませんでした。ブラウザの設定を確認してください。');
+            console.error('Error starting recognition:', error);
+            alert('音声認識の開始に失敗しました。ブラウザを再起動してみてください。');
         }
     };
 
     stopBtn.onclick = () => {
         isStopping = true; // ユーザーによる停止であることを示す
-        if (mediaRecorder && mediaRecorder.stream) {
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        }
-        recognition.stop(); // これにより onend イベントが発火し、後処理が行われる
+        // 【最終テスト】MediaRecorderが無効化されているため、関連するストリーム停止処理も不要です。
+        recognition.stop(); // これにより onend イベントが発火し、後処理が行われます
     };
 
     copyBtn.onclick = () => {

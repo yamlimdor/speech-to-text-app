@@ -10,21 +10,10 @@ const explanationContainer = document.getElementById('explanation-container'); /
 const explanationResult = document.getElementById('explanation-result'); // 解説結果表示
 const themeToggleBtn = document.getElementById('theme-toggle-btn');
 const charCounter = document.getElementById('char-counter');
-const audioPlaybackContainer = document.getElementById('audio-playback-container');
-const downloadAudioLink = document.getElementById('download-audio-link');
 const recordingIndicator = document.getElementById('recording-indicator');
-const waveformCanvas = document.getElementById('waveform-canvas');
-const canvasCtx = waveformCanvas.getContext('2d');
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let mediaRecorder;
-let audioChunks = [];
-let audioContext;
-let analyser;
-let dataArray;
-let drawVisual;
 let finalTranscript = '';
-let originalStream; // 元のストリームを保持する変数
 let businessTerms = {
     "アジェンダ": "会議の議題や議事日程のこと。",
     "アサイン": "仕事や役職を割り当てること。",
@@ -802,18 +791,6 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
             recordingIndicator.classList.remove('recording');
             startBtn.disabled = false;
             stopBtn.disabled = true;
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-            }
-            // 停止時に元のストリームのトラックもすべて停止する
-            if (originalStream) {
-                originalStream.getTracks().forEach(track => track.stop());
-                originalStream = null;
-            }
-            if (drawVisual) {
-                cancelAnimationFrame(drawVisual);
-            }
-            clearWaveform();
             autoSaveChanges();
         }
     };
@@ -850,42 +827,19 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
         resultText.scrollTop = resultText.scrollHeight; // Scroll the textarea
     };
 
-    startBtn.onclick = async () => {
+    startBtn.onclick = () => {
         try {
-            // 取得した元のストリームを保持しておく
-            originalStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
+            // 音声認識機能にマイクを専有させ、安定動作を優先します。
             recognition.start();
-
-            // ストリームを複製し、各機能が独立して使えるようにする
-            const recorderStream = originalStream.clone();
-            const visualizerStream = originalStream.clone();
-
-            mediaRecorder = new MediaRecorder(recorderStream);
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                audioPlaybackContainer.classList.remove('hidden');
-                audioChunks = [];
-            };
-            mediaRecorder.start();
-
-            setupAudioVisualizer(visualizerStream);
-
-            audioPlaybackContainer.classList.add('hidden');
-
         } catch (error) {
-            console.error('Error accessing microphone:', error);
-            alert('マイクへのアクセスが許可されませんでした。ブラウザの設定を確認してください。');
+            console.error('Error starting recognition:', error);
+            alert('音声認識の開始に失敗しました。ブラウザを再起動してみてください。');
         }
     };
 
     stopBtn.onclick = () => {
         isStopping = true; // ユーザーによる停止であることを示す
-        // まず音声認識を停止させる。リソースの解放はonendイベントに任せる
+        // 音声認識を停止させます。後処理は onend イベントで行われます。
         recognition.stop();
     };
 
@@ -924,7 +878,6 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
         resultText.value = ''; // Clear resultText
         lastTimestampMinute = -1;
         autoSaveChanges();
-        audioPlaybackContainer.classList.add('hidden');
         explanationContainer.classList.add('hidden');
         explanationResult.innerHTML = '';
         updateUIState();
@@ -1002,59 +955,6 @@ async function explainBusinessTerms(text) {
 
 // displayTranscript function is removed
 
-function setupAudioVisualizer(stream) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioContext.createAnalyser();
-    const source = audioContext.createMediaStreamSource(stream);
-    source.connect(analyser);
-
-    analyser.fftSize = 2048;
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
-
-    draw();
-}
-
-function draw() {
-    drawVisual = requestAnimationFrame(draw);
-
-    analyser.getByteTimeDomainData(dataArray);
-
-    canvasCtx.fillStyle = getComputedStyle(document.body).getPropertyValue('--primary-bg-color');
-    canvasCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-
-    canvasCtx.lineWidth = 2;
-    canvasCtx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--waveform-line-color');
-
-    canvasCtx.beginPath();
-
-    const sliceWidth = waveformCanvas.width * 1.0 / dataArray.length;
-    let x = 0;
-
-    for (let i = 0; i < dataArray.length; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = v * waveformCanvas.height / 2;
-
-        if (i === 0) {
-            canvasCtx.moveTo(x, y);
-        } else {
-            canvasCtx.lineTo(x, y);
-        }
-
-        x += sliceWidth;
-    }
-
-    canvasCtx.lineTo(waveformCanvas.width, waveformCanvas.height / 2);
-    canvasCtx.stroke();
-}
-
-function clearWaveform() {
-    if (canvasCtx) {
-        canvasCtx.fillStyle = getComputedStyle(document.body).getPropertyValue('--primary-bg-color');
-        canvasCtx.fillRect(0, 0, waveformCanvas.width, waveformCanvas.height);
-    }
-}
-
 function updateUIState() {
     // 文字数カウンターの更新
     charCounter.textContent = `文字数: ${resultText.value.length}`;
@@ -1087,14 +987,22 @@ function loadSettings() {
         resultText.value = savedTranscript; // Use resultText
         updateUIState();
     }
-    clearWaveform();
 }
 
 themeToggleBtn.onclick = () => {
     const isDarkMode = document.body.classList.toggle('dark-mode');
     localStorage.setItem('darkMode', isDarkMode);
     themeToggleBtn.textContent = isDarkMode ? 'ライトモード切替' : 'ダークモード切替';
-    clearWaveform(); // Redraw background on theme change
 };
 
 resultText.oninput = updateUIState;
+
+// --- ページ離脱防止 ---
+window.addEventListener('beforeunload', (event) => {
+    // stopBtnが有効（録音中）の場合、ページを離れる前に確認ダイアログを表示
+    if (!stopBtn.disabled) {
+        // 標準的なブラウザの動作に従い、確認メッセージを表示させる
+        event.preventDefault();
+        event.returnValue = '録音中にページを離れようとしています。よろしいですか？';
+    }
+});

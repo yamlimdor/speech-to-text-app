@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音声文字起こし with Gemini解説</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><span id="recording-indicator"></span>音声文字起こし</h1>
+            <p>録音ボタンを押して、マイクに向かって話してください。</p>
+            <button id="theme-toggle-btn">ダークモード切替</button>
+        </div>
+
+        <canvas id="waveform-canvas"></canvas>
+        
+        <div class="controls">
+            <button id="start-btn">録音開始</button>
+            <button id="stop-btn" disabled>録音停止</button>
+        </div>
+
+        <div class="result-wrapper">
+            <textarea id="result-text" placeholder="ここに文字起こし結果が表示されます..."></textarea>
+            <div class="status-bar">
+                <span id="char-counter">文字数: 0</span>
+                <div id="audio-playback-container" class="hidden">
+                    <a id="download-audio-link" download="recording.webm">音声ファイルをダウンロード</a>
+                </div>
+            </div>
+            <div class="actions">
+                <button id="copy-btn">コピー</button>
+                <!-- ▼ 新しく追加したボタン ▼ -->
+                <button id="explain-btn">用語を解説</button>
+                <button id="download-btn">出力</button>
+                <button id="cleanup-btn">フィラー除去</button>
+                <button id="clear-btn">クリア</button>
+            </div>
+        </div>
+
+        <!-- ▼ 新しく追加した解説表示エリア ▼ -->
+        <div id="explanation-container" class="hidden">
+            <h3>📖 カタカナ用語の解説</h3>
+            <div id="explanation-result"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

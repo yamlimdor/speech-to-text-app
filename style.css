@@ -1,0 +1,308 @@
+:root {
+    --primary-bg-color: #f0f2f5;
+    --secondary-bg-color: #ffffff;
+    --primary-text-color: #333;
+    --secondary-text-color: #666;
+    --border-color: #ddd;
+    --button-bg-color: #6c757d;
+    --button-text-color: #ffffff;
+    --waveform-line-color: #007bff; /* Light mode waveform color */
+}
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background-color: var(--primary-bg-color);
+    color: var(--primary-text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+    --primary-bg-color: #121212;
+    --secondary-bg-color: #1e1e1e;
+    --primary-text-color: #e0e0e0;
+    --secondary-text-color: #a0a0a0;
+    --border-color: #444;
+    --button-bg-color: #444;
+    --button-text-color: #e0e0e0;
+    --waveform-line-color: #88ddff; /* Dark mode waveform color (lighter blue) */
+}
+
+.container {
+    background-color: var(--secondary-bg-color);
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 700px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.header {
+    position: relative;
+}
+
+.header h1 {
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary-text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#recording-indicator {
+    width: 16px;
+    height: 16px;
+    background-color: red;
+    border-radius: 50%;
+    margin-right: 12px;
+    display: none; /* Hidden by default */
+}
+
+#recording-indicator.recording {
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+#waveform-canvas {
+    width: 100%;
+    height: 100px;
+    background-color: var(--primary-bg-color);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    display: block;
+}
+
+.header p {
+    color: var(--secondary-text-color);
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+}
+
+#theme-toggle-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--secondary-text-color);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.controls button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 400;
+    margin: 0 0.5rem;
+    transition: all 0.3s ease;
+}
+
+#start-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+#start-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+#start-btn:disabled {
+    background-color: #a9d3ff;
+    cursor: not-allowed;
+}
+
+#stop-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+#stop-btn:hover:not(:disabled) {
+    background-color: #b02a37;
+}
+
+#stop-btn:disabled {
+    background-color: #f8d7da;
+    cursor: not-allowed;
+}
+
+.result-wrapper {
+    margin-top: 2.5rem;
+}
+
+textarea {
+    width: 100%;
+    height: 250px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--primary-bg-color);
+    color: var(--primary-text-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    resize: vertical;
+    box-sizing: border-box;
+    line-height: 1.6;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+}
+
+#audio-playback-container a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+#audio-playback-container a:hover {
+    text-decoration: underline;
+}
+
+.hidden {
+    display: none;
+}
+
+.actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.actions button {
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.actions button:hover {
+    filter: brightness(1.15);
+}
+
+.actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: none;
+}
+
+#explain-btn {
+    background-color: #17a2b8; /* 他のボタンと区別するための色 */
+    color: white;
+}
+
+#explain-btn:hover:not(:disabled) {
+    background-color: #138496;
+    filter: none; /* 汎用ホバー効果を無効化 */
+}
+
+#explain-btn:disabled {
+    background-color: #73cde0;
+}
+
+#clear-btn {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+#clear-btn:hover:not(:disabled) {
+    background-color: #e0a800;
+    filter: none; /* 汎用ホバー効果を無効化 */
+}
+
+/* --- Explanation Section Styles --- */
+#explanation-container {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--primary-bg-color);
+    border-radius: 8px;
+    text-align: left;
+    line-height: 1.7;
+}
+
+#explanation-container h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--primary-text-color);
+    font-size: 1.2rem;
+}
+
+#explanation-result {
+    white-space: pre-wrap; /* APIからの改行を維持 */
+    color: var(--secondary-text-color);
+}
+
+/* --- Responsive Design for Smartphones --- */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 1.5rem;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .header p {
+        margin-bottom: 1.5rem;
+    }
+
+    #theme-toggle-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .controls button {
+        width: 100%;
+        margin: 0;
+    }
+
+    .actions {
+        gap: 0.8rem;
+    }
+
+    .actions button {
+        width: calc(50% - 0.4rem); /* 2 buttons per row */
+        font-size: 0.8rem;
+        padding: 12px 5px;
+    }
+}

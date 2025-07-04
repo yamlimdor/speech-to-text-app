@@ -23,6 +23,7 @@ let audioContext;
 let analyser;
 let dataArray;
 let drawVisual;
+let finalTranscript = '';
 let businessTerms = {
     "アジェンダ": "会議の議題や議事日程のこと。",
     "アサイン": "仕事や役職を割り当てること。",
@@ -754,7 +755,6 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
     recognition.interimResults = true;
     recognition.continuous = true;
 
-    let finalTranscript = localStorage.getItem('transcript') || '';
     resultText.value = finalTranscript; // Use resultText
     updateUIState();
     let lastTimestampMinute = -1;

@@ -862,7 +862,7 @@ if (SpeechRecognition && navigator.mediaDevices && navigator.mediaDevices.getUse
             };
             mediaRecorder.start();
 
-            setupAudioVisualizer(stream);
+            // setupAudioVisualizer(stream); // 仮説を検証するため、一時的に波形表示を無効化
 
             audioPlaybackContainer.classList.add('hidden');
 
